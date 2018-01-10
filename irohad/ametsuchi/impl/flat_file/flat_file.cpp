@@ -26,10 +26,11 @@
 
 using namespace iroha::ametsuchi;
 
-namespace {
-  const uint32_t DIGIT_CAPACITY = 16;
+using Identifier = FlatFile::Identifier;
 
-  /**
+// ----------| public API |----------
+
+/**
    * Convert id to a string representation. The string representation is always
    * DIGIT_CAPACITY-character width regardless of the value of `id`.
    * If the length of the string representation of `id` is less than
@@ -41,55 +42,11 @@ namespace {
    * @param id - for conversion
    * @return string repr of identifier
    */
-  std::string id_to_name(Identifier id) {
-    std::ostringstream os;
-    os << std::setw(DIGIT_CAPACITY) << std::setfill('0') << id;
-    return os.str();
-  }
-
-  /**
-   * Checking consistency of storage for provided folder
-   * If some block in the middle is missing all blocks following it are deleted
-   * @param dump_dir - folder of storage
-   * @return - last available identifier
-   */
-  nonstd::optional<Identifier> check_consistency(const std::string &dump_dir) {
-    auto log = logger::log("FLAT_FILE");
-
-    if (dump_dir.empty()) {
-      log->error("check_consistency({}), not directory", dump_dir);
-      return nonstd::nullopt;
-    }
-
-    auto const files = [&dump_dir] {
-      std::vector<boost::filesystem::path> ps;
-      std::copy(boost::filesystem::directory_iterator{dump_dir},
-                boost::filesystem::directory_iterator{},
-                std::back_inserter(ps));
-      std::sort(ps.begin(),
-                ps.end(),
-                [](const boost::filesystem::path &lhs,
-                   const boost::filesystem::path &rhs) {
-                  return lhs.compare(rhs) < 0;
-                });
-      return ps;
-    }();
-
-    auto const missing = boost::range::find_if(
-        files | boost::adaptors::indexed(1), [](const auto &it) {
-          return id_to_name(it.index()) != it.value().filename();
-        });
-
-    std::for_each(
-        missing.get(), files.cend(), [](const boost::filesystem::path &p) {
-          boost::filesystem::remove(p);
-        });
-
-    return missing.get() - files.cbegin();
-  }
-}  // namespace
-
-// ----------| public API |----------
+std::string FlatFile::id_to_name(Identifier id) {
+  std::ostringstream os;
+  os << std::setw(DIGIT_CAPACITY) << std::setfill('0') << id;
+  return os.str();
+}
 
 std::unique_ptr<FlatFile> FlatFile::create(const std::string &path) {
   auto log_ = logger::log("FlatFile::create()");
@@ -177,4 +134,47 @@ FlatFile::FlatFile(Identifier current_id, const std::string &path)
     : dump_dir_(path) {
   log_ = logger::log("FlatFile");
   current_id_.store(current_id);
+}
+
+const uint32_t FlatFile::DIGIT_CAPACITY = 16;
+
+/**
+   * Checking consistency of storage for provided folder
+   * If some block in the middle is missing all blocks following it are deleted
+   * @param dump_dir - folder of storage
+   * @return - last available identifier
+   */
+nonstd::optional<Identifier> FlatFile::check_consistency(const std::string &dump_dir) {
+  auto log = logger::log("FLAT_FILE");
+
+  if (dump_dir.empty()) {
+    log->error("check_consistency({}), not directory", dump_dir);
+    return nonstd::nullopt;
+  }
+
+  auto const files = [&dump_dir] {
+    std::vector<boost::filesystem::path> ps;
+    std::copy(boost::filesystem::directory_iterator{dump_dir},
+              boost::filesystem::directory_iterator{},
+              std::back_inserter(ps));
+    std::sort(ps.begin(),
+              ps.end(),
+              [](const boost::filesystem::path &lhs,
+                 const boost::filesystem::path &rhs) {
+                return lhs.compare(rhs) < 0;
+              });
+    return ps;
+  }();
+
+  auto const missing = boost::range::find_if(
+      files | boost::adaptors::indexed(1), [](const auto &it) {
+        return id_to_name(it.index()) != it.value().filename();
+      });
+
+  std::for_each(
+      missing.get(), files.cend(), [](const boost::filesystem::path &p) {
+        boost::filesystem::remove(p);
+      });
+
+  return missing.get() - files.cbegin();
 }

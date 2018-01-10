@@ -30,16 +30,18 @@ namespace iroha {
   namespace ametsuchi {
 
     /**
-     * Type of storage key
-     */
-    using Identifier = uint32_t;
-
-    /**
      * Solid storage based on raw files
      */
     class FlatFile {
      public:
       // ----------| public API |----------
+
+      /**
+       * Type of storage key
+       */
+      using Identifier = uint32_t;
+
+      static std::string id_to_name(Identifier id);
 
       /**
        * Create storage in paths
@@ -107,6 +109,10 @@ namespace iroha {
       const std::string dump_dir_;
 
       logger::Logger log_;
+
+      static const uint32_t DIGIT_CAPACITY;
+
+      static nonstd::optional<Identifier> check_consistency(const std::string &dump_dir);
 
      public:
       ~FlatFile() = default;
