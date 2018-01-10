@@ -30,18 +30,6 @@ using Identifier = FlatFile::Identifier;
 
 // ----------| public API |----------
 
-/**
-   * Convert id to a string representation. The string representation is always
-   * DIGIT_CAPACITY-character width regardless of the value of `id`.
-   * If the length of the string representation of `id` is less than
-   * DIGIT_CAPACITY, then the returned value is filled with leading zeros.
-   *
-   * For example, if str_rep(`id`) is "123", then the returned value is
-   * "0000000000000123".
-   *
-   * @param id - for conversion
-   * @return string repr of identifier
-   */
 std::string FlatFile::id_to_name(Identifier id) {
   std::ostringstream os;
   os << std::setw(DIGIT_CAPACITY) << std::setfill('0') << id;
@@ -138,12 +126,6 @@ FlatFile::FlatFile(Identifier current_id, const std::string &path)
 
 const uint32_t FlatFile::DIGIT_CAPACITY = 16;
 
-/**
-   * Checking consistency of storage for provided folder
-   * If some block in the middle is missing all blocks following it are deleted
-   * @param dump_dir - folder of storage
-   * @return - last available identifier
-   */
 nonstd::optional<Identifier> FlatFile::check_consistency(const std::string &dump_dir) {
   auto log = logger::log("FLAT_FILE");
 

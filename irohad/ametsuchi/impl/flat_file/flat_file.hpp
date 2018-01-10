@@ -41,6 +41,18 @@ namespace iroha {
        */
       using Identifier = uint32_t;
 
+      /**
+       * Convert id to a string representation. The string representation is always
+       * DIGIT_CAPACITY-character width regardless of the value of `id`.
+       * If the length of the string representation of `id` is less than
+       * DIGIT_CAPACITY, then the returned value is filled with leading zeros.
+       *
+       * For example, if str_rep(`id`) is "123", then the returned value is
+       * "0000000000000123".
+       *
+       * @param id - for conversion
+       * @return string repr of identifier
+       */
       static std::string id_to_name(Identifier id);
 
       /**
@@ -112,6 +124,12 @@ namespace iroha {
 
       static const uint32_t DIGIT_CAPACITY;
 
+      /**
+       * Checking consistency of storage for provided folder
+       * If some block in the middle is missing all blocks following it are deleted
+       * @param dump_dir - folder of storage
+       * @return - last available identifier
+       */
       static nonstd::optional<Identifier> check_consistency(const std::string &dump_dir);
 
      public:
