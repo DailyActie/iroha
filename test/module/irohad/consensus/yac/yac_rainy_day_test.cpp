@@ -16,14 +16,8 @@
  */
 
 #include <gmock/gmock.h>
-#include <gtest/gtest.h>
-#include <string>
-#include <utility>
 #include "framework/test_subscriber.hpp"
 #include "module/irohad/consensus/yac/yac_mocks.hpp"
-
-#include <iostream>
-#include <vector>
 
 using ::testing::Return;
 using ::testing::_;
@@ -32,11 +26,13 @@ using ::testing::AtLeast;
 
 using namespace iroha::consensus::yac;
 using namespace framework::test_subscriber;
-using namespace std;
 
+/**
+ * @given yac consensus with four peers
+ * @when two peers vote for one hash and two for another
+ * @then commit does not happen, instead send_reject is triggered on transport
+ */
 TEST_F(YacTest, ValidCaseWhenNotReceiveSupermajority) {
-  cout << "-----------| Start => vote => propagate commit |-----------" << endl;
-
   auto my_peers = std::vector<iroha::model::Peer>(
       {default_peers.begin(), default_peers.begin() + 4});
   ASSERT_EQ(4, my_peers.size());
@@ -56,7 +52,7 @@ TEST_F(YacTest, ValidCaseWhenNotReceiveSupermajority) {
   EXPECT_CALL(*timer, deny()).Times(0);
 
   EXPECT_CALL(*crypto, verify(An<CommitMessage>())).Times(0);
-  EXPECT_CALL(*crypto, verify(An<RejectMessage>())).Times(0);
+  EXPECT_CALL(*crypto, verify(An<RejectMessage>())).Times(my_peers.size());
   EXPECT_CALL(*crypto, verify(An<VoteMessage>())).WillRepeatedly(Return(true));
 
   YacHash hash1("proposal_hash", "block_hash");
@@ -69,4 +65,8 @@ TEST_F(YacTest, ValidCaseWhenNotReceiveSupermajority) {
   for (auto i = 2; i < 4; ++i) {
     yac->on_vote(create_vote(hash2, std::to_string(i)));
   };
+
+  for (auto i = 0; i < 4; ++i) {
+    yac->on_reject(RejectMessage({create_vote(hash1, std::to_string(i))}));
+  }
 }
