@@ -219,10 +219,10 @@ TEST_F(BlockQueryTest, GetTransactionsWithInvalidTxAndValidTx) {
 /**
  * @given block store with 2 blocks totally containing 3 txs created by
  * user1@test AND 1 tx created by user2@test
- * @when get non-existent 1000 block
+ * @when get non-existent 1000th block
  * @then nothing is returned
  */
-TEST_F(BlockQueryTest, BlockQuery_GetBlocks_GetNonExistentBlock) {
+TEST_F(BlockQueryTest, GetNonExistentBlock) {
   auto wrapper = make_test_subscriber<CallExact>(
       blocks->getBlocks(1000, 1), 0);
   wrapper.subscribe();
@@ -238,7 +238,7 @@ TEST_F(BlockQueryTest, BlockQuery_GetBlocks_GetNonExistentBlock) {
  * @note test for bug, when <total_blocks=2, height=1, count=1>, then
  * min(1+1, 2)=2, and it reads from 1 to 2 (2 blocks).
  */
-TEST_F(BlockQueryTest, BlockQuery_GetBlocks_GetExactlyOneBlock) {
+TEST_F(BlockQueryTest, GetExactlyOneBlock) {
   auto wrapper = make_test_subscriber<CallExact>(
       blocks->getBlocks(1, 1), 1);
   wrapper.subscribe();
@@ -249,9 +249,9 @@ TEST_F(BlockQueryTest, BlockQuery_GetBlocks_GetExactlyOneBlock) {
  * @given block store with 2 blocks totally containing 3 txs created by
  * user1@test AND 1 tx created by user2@test
  * @when count=0
- * @then returned empty block
+ * @then no blocks returned
  */
-TEST_F(BlockQueryTest, BlockQuery_GetBlocks_GetCountZero) {
+TEST_F(BlockQueryTest, GetBlocks_Count0) {
   auto wrapper = make_test_subscriber<CallExact>(
       blocks->getBlocks(1, 0), 0);
   wrapper.subscribe();
@@ -262,9 +262,9 @@ TEST_F(BlockQueryTest, BlockQuery_GetBlocks_GetCountZero) {
  * @given block store with 2 blocks totally containing 3 txs created by
  * user1@test AND 1 tx created by user2@test
  * @when get zero block
- * @then returned empty block
+ * @then no blocks returned
  */
-TEST_F(BlockQueryTest, BlockQuery_GetBlocks_GetZeroBlock) {
+TEST_F(BlockQueryTest, GetZeroBlock) {
   auto wrapper = make_test_subscriber<CallExact>(
       blocks->getBlocks(0, 1), 0);
   wrapper.subscribe();
@@ -277,7 +277,7 @@ TEST_F(BlockQueryTest, BlockQuery_GetBlocks_GetZeroBlock) {
  * @when get all blocks starting from 1
  * @then returned all blocks (2)
  */
-TEST_F(BlockQueryTest, BlockQuery_GetBlocksFrom_GetAllBlocksFrom1) {
+TEST_F(BlockQueryTest, GetBlocksFrom1) {
   auto wrapper = make_test_subscriber<CallExact>(
       blocks->getBlocksFrom(1), this->blocks_total);
   size_t counter = 1;
@@ -293,9 +293,9 @@ TEST_F(BlockQueryTest, BlockQuery_GetBlocksFrom_GetAllBlocksFrom1) {
  * @given block store with 2 blocks totally containing 3 txs created by
  * user1@test AND 1 tx created by user2@test. Block #1 is filled with trash data (NOT JSON).
  * @when read block #1
- * @then get no blocks / error
+ * @then get no blocks
  */
-TEST_F(BlockQueryTest, BlockQuery_GetBlocks_GetBlockButItIsNotJSON) {
+TEST_F(BlockQueryTest, GetBlockButItIsNotJSON) {
   namespace fs = boost::filesystem;
   size_t block_n = 1;
 
@@ -308,11 +308,7 @@ TEST_F(BlockQueryTest, BlockQuery_GetBlocks_GetBlockButItIsNotJSON) {
 
   auto wrapper = make_test_subscriber<CallExact>(
       blocks->getBlocks(block_n, 1), 0);
-  wrapper.subscribe([this, block_n](Block block) {
-    FAIL() << "should not get here"
-           << "received height " << block.height
-           << ", expected height: " << block_n;
-  });
+  wrapper.subscribe();
 
   ASSERT_TRUE(wrapper.validate());
 }
@@ -321,9 +317,9 @@ TEST_F(BlockQueryTest, BlockQuery_GetBlocks_GetBlockButItIsNotJSON) {
  * @given block store with 2 blocks totally containing 3 txs created by
  * user1@test AND 1 tx created by user2@test. Block #1 is filled with trash data (NOT JSON).
  * @when read block #1
- * @then get no blocks / error
+ * @then get no blocks
  */
-TEST_F(BlockQueryTest, BlockQuery_GetBlocks_GetBlockButItIsInvalidBlock) {
+TEST_F(BlockQueryTest, GetBlockButItIsInvalidBlock) {
   namespace fs = boost::filesystem;
   size_t block_n = 1;
 
@@ -339,11 +335,7 @@ TEST_F(BlockQueryTest, BlockQuery_GetBlocks_GetBlockButItIsInvalidBlock) {
 
   auto wrapper = make_test_subscriber<CallExact>(
       blocks->getBlocks(block_n, 1), 0);
-  wrapper.subscribe([this, block_n](Block block) {
-    FAIL() << "should not get here"
-           << "received height " << block.height
-           << ", expected height: " << block_n;
-  });
+  wrapper.subscribe();
 
   ASSERT_TRUE(wrapper.validate());
 }
@@ -354,7 +346,7 @@ TEST_F(BlockQueryTest, BlockQuery_GetBlocks_GetBlockButItIsInvalidBlock) {
  * @when get top 2 blocks
  * @then last 2 blocks returned with correct height
  */
-TEST_F(BlockQueryTest, BlockQuery_GetTopBlocks) {
+TEST_F(BlockQueryTest, GetTop2Blocks) {
   size_t blocks_n = 2; // top 2 blocks
   auto wrapper = make_test_subscriber<CallExact>(
       blocks->getTopBlocks(blocks_n), blocks_n);
